@@ -1,0 +1,27 @@
+#beta, pvalues
+awk '{print $2, $150, $233, $348, $739, $927, $929, $1178, $1261, $1376, $1767, $1955, $1957}' GSE68379_Matrix.processed.txt > wildtype_beta_pvalues.txt
+awk '{print $2, $168, $417, $822, $927, $926, $1023, $1196, $1445, $1850, $1956, $1954, $2051}' GSE68379_Matrix.processed.txt > hyperactive_beta_pvalues.txt
+#signals = meth, unmeth
+awk '{print $2, $150, $233, $348, $739, $927, $929, $1178, $1261, $1376, $1767, $1955, $1957}' GSE68379_Matrix.Signal.Intensities.txt > wildtype_signals.txt
+awk '{print $2, $168, $417, $822, $927, $926, $1023, $1196, $1445, $1850, $1956, $1954, $2051}' GSE68379_Matrix.Signal.Intensities.txt > hyperactive_signals.txt
+
+
+#delete first lines 
+sed -i.bak -e '1d' wildtype_beta_pvalues.txt
+sed -i.bak -e '1d' hyperactive_beta_pvalues.txt
+sed -i.bak -e '1d' wildtype_signals.txt
+sed -i.bak -e '1d' hyperactive_signals.txt
+
+
+#sort files
+sort wildtype_beta_pvalues.txt > sort_wildtype_beta_pvalues.txt
+sort hyperactive_beta_pvalues.txt > sort_hyperactive_beta_pvalues.txt
+sort wildtype_signals.txt > sort_wildtype_signals.txt
+sort hyperactive_signals.txt > sort_hyperactive_signals.txt
+
+
+#join files with CG
+join CG.txt sort_wildtype_beta_pvalues.txt > CG_wildtype_betap.txt
+join CG.txt sort_hyperactive_beta_pvalues.txt > CG_hyperactive_betap.txt
+join CG.txt sort_wildtype_signals.txt > CG_wildtype_signals.txt
+join CG.txt sort_hyperactive_signals.txt > CG_hyperactive_signals.txt
