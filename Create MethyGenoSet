@@ -25,3 +25,7 @@ join CG.txt sort_wildtype_beta_pvalues.txt > CG_wildtype_betap.txt
 join CG.txt sort_hyperactive_beta_pvalues.txt > CG_hyperactive_betap.txt
 join CG.txt sort_wildtype_signals.txt > CG_wildtype_signals.txt
 join CG.txt sort_hyperactive_signals.txt > CG_hyperactive_signals.txt
+
+## R 
+# make the GRanges
+gr <- makeGRangesFromDataFrame(CG, seqnames.field = c("chr"), start.field = c("loci), end.field = c("loci))
