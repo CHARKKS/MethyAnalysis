@@ -18,7 +18,8 @@
 
 awk '{print $2, $150, $233, $348, $739, $927, $929, $168, $417, $822, $928, $926, $1023}'  GSE68379_Matrix.Signal.Intensities.txt  > CG_signals_meth.txt
 awk '{print $2, $1178, $1261, $1376, $1767, $1955, $1957, $1196, $1445, $1850, $1956, $1954, $2051}' GSE68379_Matrix.Signal.Intensities.txt > CG_signals_unmeth.txt
-
+sed -i.bak -e '1d' CG_signals_meth.txt
+sed -i.bak -e '1d' CG_signals_unmeth.txt
 #FOR BETA METH
 #Wildtype EZH2
 #Croap2: 149
@@ -34,3 +35,121 @@ awk '{print $2, $1178, $1261, $1376, $1767, $1955, $1957, $1196, $1445, $1850, $
 #sudhl6: 927
 #sudhl4: 925
 #wsudlcl2: 1022
+
+awk '{print $2, $150, $233, $348, $739, $927, $929, $168, $417, $822, $928, $926, $1023}'  GSE68379_Matrix.processed.txt  > CG_beta.txt
+sed -i.bak -e '1d' CG_beta.txt
+join CG.txt CG_beta.txt > CG_beta_2.txt
+
+#source("https://bioconductor.org/biocLite.R")
+#biocLite("methyAnalysis")
+#biocLite("genoset")
+#.libPaths("~/lib/R")
+library(methyAnalysis)
+library(readr)
+library(genoset)
+
+data_dir <- "/mnt/gtklab01/charlene/MethyAnalysis"
+setwd("~")
+
+####################################################################################################################################
+##Import Dataset
+
+column_names <- c("CGID", "chr", "start", "end",
+                  "CRO.AP.2", "FARAGE", "HT", "OCI.LY.19", "SU.DHL.5", "SU.DHL.8",
+                  "DB", "KARPAS.422", "RL", "SU.DHL.6", "SU.DHL.4", "WSU.DLCL2")
+column_names2 <- c("CGID", "CRO.AP.2", "FARAGE", "HT", "OCI.LY.19", "SU.DHL.5", "SU.DHL.8",
+                   "DB", "KARPAS.422", "RL", "SU.DHL.6", "SU.DHL.4", "WSU.DLCL2")
+
+CG_beta <- read_delim("/mnt/raid0/home/charlene/CG_beta.txt", 
+                      " ", escape_double = FALSE, col_names = column_names, 
+                      trim_ws = TRUE)
+CG_signals_meth <- read_delim("/mnt/raid0/home/charlene/CG_signals_meth.txt", 
+                              " ", escape_double = FALSE, col_names = column_names2, 
+                              trim_ws = TRUE)
+CG_signals_unmeth <- read_delim("/mnt/raid0/home/charlene/CG_signals_unmeth.txt", 
+                                " ", escape_double = FALSE, col_names = column_names2, 
+                                trim_ws = TRUE)
+
+##make the GRanges
+
+gr <- makeGRangesFromDataFrame(CG_beta,
+                               seqnames.field = c("chr"),
+                               start.field = c("start"),
+                               end.field = c("end"))
+names(gr) <- CG_beta$CGID
+
+##pData
+
+phenoData <- data.frame(Type=c(rep("WT",6),rep("Hyperactive",6)),
+                        row.names=c("CRO.AP.2", "FARAGE", "HT", "OCI.LY.19", "SU.DHL.5", "SU.DHL.8",
+                                    "DB", "KARPAS.422", "RL", "SU.DHL.6", "SU.DHL.4", "WSU.DLCL2"))
+                        
+
+##make the exprs matrix
+CG.beta.matrix <- as.matrix(CG_beta[5:16])
+row.names(CG.beta.matrix) <- c(CG_beta$CGID)
+
+#meth signals
+CG.signals.meth <- as.matrix(CG_signals_meth[2:13])
+row.names(CG.signals.meth) <- c(CG_signals_meth$CGID)
+
+#unmeth signals
+CG.signals.unmeth <- as.matrix(CG_signals_unmeth[2:13])
+row.names(CG.signals.unmeth) <- c(CG_signals_unmeth$CGID)
+
+##make the MethyGenoSet
+
+Methygenoset <- MethyGenoSet(
+  rowRanges = gr,
+  exprs = CG.beta.matrix, 
+  methylated = CG.signals.meth,
+  unmethylated = CG.signals.unmeth)
+
+####################################################################################################################################
+
+####################################################################################################################################
+##Identify Differentially Methylated Regions
+
+#smoothing window
+Methygenoset.sm <- smoothMethyData(Methygenoset, winSize = 250)
+
+#get sample type information
+sampleType <- colData(Methygenoset)$Type
+
+#differential methylation test
+allResult <- detectDMR.slideWin(Methygenoset, sampleType=sampleType)
+allResult_w <- detectDMR.slideWin(Methygenoset, sampleType = sampleType, testMethod = "wilcox")
+
+#Identify differentially methylated regions
+#using default parameters -pValueTh = 0.01 -> no significnat CpG sites
+allDMRInfo = identifySigDMR(allResult,
+                            p.adjust.method = "fdr",
+                            pValueTh = 0.5)
+names(allDMRInfo)
+
+####################################################################################################################################
+
+####################################################################################################################################
+##Annotating DMRs
+
+#Annotate significant DMR info
+DMRInfo.ann <- annotateDMRInfo(allDMRInfo, 'TxDb.Hsapiens.UCSC.hg19.knownGene')
+
+#Output the DMR information
+export.DMRInfo(DMRInfo.ann, savePrefix='testExample')
+
+####################################################################################################################################
+
+####################################################################################################################################
+##Visualisation
+
+#Plot the DNA methylation heatmap by chromosome location
+DMRInfo.ann <- annotateDMRInfo(allDMRInfo, 'TxDb.Hsapiens.UCSC.hg19.knownGene')
+
+#Plot the DNA methylation heatmap by gene of selected GRanges
+export.DMRInfo(DMRInfo.ann, savePrefix='testExample')
+
+
+
+
+
