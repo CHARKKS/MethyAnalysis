@@ -20,6 +20,9 @@ awk '{print $2, $150, $233, $348, $739, $927, $929, $168, $417, $822, $928, $926
 awk '{print $2, $1178, $1261, $1376, $1767, $1955, $1957, $1196, $1445, $1850, $1956, $1954, $2051}' GSE68379_Matrix.Signal.Intensities.txt > CG_signals_unmeth.txt
 sed -i.bak -e '1d' CG_signals_meth.txt
 sed -i.bak -e '1d' CG_signals_unmeth.txt
+sort -n CG_signals_meth.txt > CG_signals_meth_sort.txt
+sort -n CG_signals_unmeth.txt > CG_signals_unmeth_sort.txt
+
 #FOR BETA METH
 #Wildtype EZH2
 #Croap2: 149
@@ -39,6 +42,30 @@ sed -i.bak -e '1d' CG_signals_unmeth.txt
 awk '{print $2, $150, $233, $348, $739, $927, $929, $168, $417, $822, $928, $926, $1023}'  GSE68379_Matrix.processed.txt  > CG_beta.txt
 sed -i.bak -e '1d' CG_beta.txt
 join CG.txt CG_beta.txt > CG_beta_2.txt
+sort -n CG_beta_2.txt > CG_beta_sort.txt
+
+#FOR PVALUE
+#Wildtype EZH2
+#Croap2: 1177
+#Farage: 1269
+#HT: 1375
+#ocily19:1766
+#sudhl5: 1954
+#sudhl8: 1956
+#Hyperactive EZH2
+#db:1195
+#karpas422: 1444
+#rl: 1849
+#sudhl6: 1955
+#sudhl4: 1953
+#wsudlcl2: 2050
+awk '{print $2, $1177, $1269, $1375, $1766, $1954, $1956, $1195, $1444, $1849, $1955, $1953, $2050}'  GSE68379_Matrix.processed.txt  > CG_betap.txt
+sed -i.bak -e '1d' CG_betap.txt
+join CG_beta.txt CG_betap.txt > CG_betap_2.txt
+sort -n CG_betap_2.txt > CG_betap_sort.txt
+
+
+
 
 #source("https://bioconductor.org/biocLite.R")
 #biocLite("methyAnalysis")
